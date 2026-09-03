@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TON Webhook Gateway</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#111;background:#f6f7f8}
+    *{box-sizing:border-box}body{margin:0}.shell{max-width:1120px;margin:auto;padding:48px 24px 72px}
+    header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:44px}
+    h1{font-size:clamp(38px,6vw,82px);letter-spacing:-.065em;line-height:.9;margin:0;max-width:780px}
+    .tag{font:12px ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#6b7280}
+    .pulse{width:12px;height:12px;border-radius:50%;background:#111;box-shadow:0 0 0 8px #1111;margin-top:8px}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:34px 0 46px}
+    .step{min-height:110px;padding:18px;background:#fff;border-radius:24px;box-shadow:0 10px 35px #00000008}
+    .step b{display:block;font-size:15px}.step span{display:block;color:#777;font-size:12px;margin-top:8px;line-height:1.45}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}.stat{background:#101114;color:#fff;border-radius:28px;padding:24px}.stat strong{font-size:34px;display:block}.stat small{color:#9ca3af}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:24px;overflow:hidden}th,td{text-align:left;padding:14px 16px;font-size:13px;border-bottom:1px solid #eee}th{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}.status{font-family:ui-monospace,monospace}
+    .hint{margin-top:18px;color:#6b7280;font:12px ui-monospace,monospace}
+    @media(max-width:800px){.flow{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr 1fr}header{flex-direction:column}.step:last-child{grid-column:span 2}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div><div class="tag">payment infrastructure / event relay</div><h1>Webhook traffic, made boring.</h1></div><div class="pulse" title="gateway online"></div></header>
+    <section class="flow">
+      <div class="step"><b>Ingress</b><span>TON & Telegram payloads arrive.</span></div>
+      <div class="step"><b>Verify</b><span>Raw-body signature validation.</span></div>
+      <div class="step"><b>Ledger</b><span>Fingerprint-based idempotency.</span></div>
+      <div class="step"><b>Relay</b><span>Signed delivery with backoff.</span></div>
+      <div class="step"><b>Dead letter</b><span>Failed events remain inspectable.</span></div>
+    </section>
+    <section class="stats" id="stats"></section>
+    <section><table><thead><tr><th>Event</th><th>Source</th><th>Kind</th><th>Amount</th><th>Status</th><th>Attempts</th></tr></thead><tbody id="events"></tbody></table></section>
+    <div class="hint">GET /api/dashboard · POST /ingress/ton · POST /ingress/telegram</div>
+  </main>
+  <script>
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function refresh(){
+      const r=await fetch('./api/dashboard'); const data=await r.json();
+      const wanted=['queued','retrying','delivered','failed']; const counts=Object.fromEntries(data.counts.map(x=>[x.status,x.count]));
+      document.querySelector('#stats').innerHTML=wanted.map(k=>`<div class="stat"><strong>${counts[k]||0}</strong><small>${k}</small></div>`).join('');
+      document.querySelector('#events').innerHTML=data.recent.map(x=>`<tr><td>${esc(x.id.slice(0,8))}</td><td>${esc(x.source)}</td><td>${esc(x.kind)}</td><td>${esc(x.amount??'—')} ${esc(x.asset??'')}</td><td class="status">${esc(x.status)}</td><td>${esc(x.attempts)}</td></tr>`).join('') || '<tr><td colspan="6">No events yet.</td></tr>';
+    }
+    refresh(); setInterval(refresh,2500);
+  </script>
+</body>
+</html>

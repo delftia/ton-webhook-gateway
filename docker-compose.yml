@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gateway
+      POSTGRES_PASSWORD: gateway
+      POSTGRES_DB: gateway
+    ports: ["5432:5432"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes:
+      - redis_data:/data
+
+  gateway:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    ports: ["8080:8080"]
+    env_file: .env
+    volumes:
+      - ./:/app
+    depends_on: [postgres, redis]
+
+volumes:
+  pg_data:
+  redis_data:

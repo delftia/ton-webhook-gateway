@@ -1,0 +1,22 @@
+{
+  "name": "ton-webhook-gateway",
+  "version": "0.9.0",
+  "description": "Reliable webhook infrastructure for TON and Telegram payment applications.",
+  "type": "module",
+  "main": "src/boot.js",
+  "scripts": {
+    "start": "node src/boot.js",
+    "dev": "node --watch src/boot.js",
+    "test": "node --test test/*.test.js",
+    "demo:event": "node scripts/send-demo-event.js"
+  },
+  "keywords": ["ton", "telegram", "webhook", "payments", "redis", "postgresql", "gateway"],
+  "license": "MIT",
+  "engines": {"node": ">=20"},
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "ioredis": "^5.4.1",
+    "pg": "^8.13.1"
+  }
+}
